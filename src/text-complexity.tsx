@@ -8,6 +8,10 @@ function sanitizeText(text: string): string {
     .replace(/[\uD800-\uDFFF]/g, "");
 }
 
+function formatNumber(num: number): string {
+  return num.toLocaleString();
+}
+
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
@@ -56,7 +60,8 @@ function calculateMATTR(words: string[], windowSize: number = 100): number {
 
 export default function Command() {
   const [text, setText] = useState<string>("");
-  const [mattr, setMATTR] = useState<number>(1);
+  const [mattr100, setMATTR100] = useState<number>(1);
+  const [mattr500, setMATTR500] = useState<number>(1);
   const [wordCount, setWordCount] = useState<number>(0);
 
   useEffect(() => {
@@ -81,14 +86,19 @@ export default function Command() {
   useEffect(() => {
     const words = tokenize(text);
     setWordCount(words.length);
-    setMATTR(words.length > 0 ? calculateMATTR(words, 100) : 1);
+    setMATTR100(words.length > 0 ? calculateMATTR(words, 100) : 1);
+    setMATTR500(words.length > 0 ? calculateMATTR(words, 500) : 1);
   }, [text]);
+
+  const mattr100Line = `${mattr100.toFixed(3)} MATTR-100 score (0.80 typical)`;
+  const mattr500Line = wordCount >= 500 ? `\n${mattr500.toFixed(3)} MATTR-500 score (0.58 typical)` : "";
+  const wordCountLine = `\n${formatNumber(wordCount)} words`;
+  const inaccuracyWarning = wordCount < 100 ? " (may be inaccurate with <100 words)" : "";
+  const descriptionText = mattr100Line + mattr500Line + wordCountLine + inaccuracyWarning;
 
   return (
     <Form>
-      <Form.Description
-        text={`${mattr.toFixed(2)} MATTR-100 score (0.8 typical)\n${wordCount} words${wordCount < 150 ? " (may be inaccurate with <150 words)" : ""}`}
-      />
+      <Form.Description text={descriptionText} />
       <Form.TextArea
         id="text"
         title="Text"
